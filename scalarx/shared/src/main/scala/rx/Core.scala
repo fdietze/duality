@@ -13,7 +13,7 @@ import scala.util.Try
   * other [[Rx]]s that depend on it, running any triggers and notifying
   * downstream [[Rx]]s when its value changes.
   */
-sealed trait Rx[+T] { self =>
+trait Rx[+T] { self =>
   /**
     * Get the current value of this [[Rx]] at this very moment,
     * without listening for updates
@@ -244,6 +244,12 @@ case class VarTuple[T](v: Var[T], value: T){
   def set() = v.Internal.value = value
 }
 
+trait WriteVar[T] {
+  def update(newValue: T): Unit
+  def kill(): Unit
+  def recalc():Unit
+}
+
 object Var{
   /**
     * Create a [[Var]] from an initial value
@@ -268,7 +274,7 @@ object Var{
   * A smart variable that can be set manually, and will notify downstream
   * [[Rx]]s and run any triggers whenever its value changes.
   */
-class Var[T](initialValue: T) extends Rx[T]{
+class Var[T](initialValue: T) extends Rx[T] with WriteVar[T] {
 
   object Internal extends Internal{
     def depth = 0
@@ -297,6 +303,31 @@ class Var[T](initialValue: T) extends Rx[T]{
   }
 
   override def toString() = s"Var@${Integer.toHexString(hashCode()).take(2)}($now)"
+}
+
+
+class RxVar[S, A](val write: WriteVar[S], val rx: Rx[A])(implicit ctx: Ctx.Owner) extends Rx[A] with WriteVar[S] {
+  object Internal extends Internal {
+    override val downStream = rx.Internal.downStream
+    override val observers = rx.Internal.observers
+
+    override def clearDownstream() = rx.Internal.clearDownstream()
+    override def depth = rx.Internal.depth
+    override def addDownstream(ctx: Ctx.Data) = rx.Internal.addDownstream(ctx)
+  }
+
+  def kill(): Unit = {rx.kill(); write.kill()}
+  def recalc(): Unit = write.recalc()
+  def toTry: scala.util.Try[A] = rx.toTry
+  override def update(newValue: S) = write() = newValue
+
+  def now = rx.now
+  def foreach(f: A => Unit)(implicit ctx: Ctx.Owner) = rx.foreach(f)
+}
+
+object RxVar {
+  def apply[S, A](write: WriteVar[S], rx: Rx[A])(implicit ctx: Ctx.Owner): RxVar[S, A] = new RxVar(write, rx)
+  def apply[S](value: S)(implicit ctx: Ctx.Owner): RxVar[S, S] = {val inner = Var(value); RxVar(inner, inner)}
 }
 
 object Ctx{
