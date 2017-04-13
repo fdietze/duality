@@ -1,10 +1,10 @@
 crossScalaVersions := Seq("2.10.6", "2.11.8", "2.12.0")
 
 val scalarx = crossProject.settings(
-  organization := "com.lihaoyi",
+  organization := "com.github.fdietze",
   name := "scalarx",
   scalaVersion := "2.12.0",
-  version := "0.3.2",
+  version := "0.3.3-SNAPSHOT",
 
   libraryDependencies ++= Seq(
     "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided",
