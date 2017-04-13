@@ -306,7 +306,7 @@ class Var[T](initialValue: T) extends Rx[T] with WriteVar[T] {
 }
 
 
-class RxVar[S, A](val write: WriteVar[S], val rx: Rx[A])(implicit ctx: Ctx.Owner) extends Rx[A] with WriteVar[S] {
+class RxVar[S, A](write: WriteVar[S], rx: Rx[A])(implicit ctx: Ctx.Owner) extends Rx[A] with WriteVar[S] {
   object Internal extends Internal {
     override val downStream = rx.Internal.downStream
     override val observers = rx.Internal.observers
