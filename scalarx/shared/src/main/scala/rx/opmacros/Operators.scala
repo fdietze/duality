@@ -112,7 +112,7 @@ trait Operators[T, Wrap[_]]{
                         enclosing: rx.Ctx.Owner): Rx.Dynamic[V] = {
 
     Rx.build { (ownerCtx, dataCtx) =>
-      prefix.Internal.addDownstream(dataCtx)
+      prefix.addDownstream(dataCtx)
       this.unwrap(call(ownerCtx, dataCtx)(this.get(prefix))).apply()(dataCtx)
     }(enclosing)
   }
@@ -120,7 +120,7 @@ trait Operators[T, Wrap[_]]{
                     enclosing: rx.Ctx.Owner): Rx.Dynamic[V] = {
 
     Rx.build { (ownerCtx, dataCtx) =>
-      prefix.Internal.addDownstream(dataCtx)
+      prefix.addDownstream(dataCtx)
       this.unwrap(call(ownerCtx, dataCtx)(this.get(prefix)))
     }(enclosing)
   }
@@ -131,7 +131,7 @@ trait Operators[T, Wrap[_]]{
 
     var prev: Wrap[V] = start
     Rx.build { (ownerCtx, dataCtx) =>
-      prefix.Internal.addDownstream(dataCtx)
+      prefix.addDownstream(dataCtx)
       prev = f(ownerCtx, dataCtx)(prev, this.get(prefix))
       this.unwrap(prev)
     }(enclosing)
@@ -151,7 +151,7 @@ trait Operators[T, Wrap[_]]{
     def next: T = this.unwrap(prev)
 
     Rx.build { (ownerCtx, dataCtx) =>
-      prefix.Internal.addDownstream(dataCtx)
+      prefix.addDownstream(dataCtx)
       if(init) {
         init = false
         prev = initValue
@@ -170,7 +170,7 @@ trait Operators[T, Wrap[_]]{
     var init = true
     var prev = this.get(prefix)
     Rx.build {  (ownerCtx, dataCtx) =>
-      prefix.Internal.addDownstream(dataCtx)
+      prefix.addDownstream(dataCtx)
       if(f(ownerCtx, dataCtx)(this.get(prefix)) || init) {
         init = false
         prev = start
