@@ -7,6 +7,8 @@ lazy val scalarx = crossProject.settings(
   version := "0.3.2",
 
   libraryDependencies ++= Seq(
+    "org.typelevel" %%% "cats-core" % "1.0.0-RC1",
+    "io.monadless" %%% "monadless-cats" % "0.0.13",
     "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided",
     "org.scala-lang" % "scala-compiler" % scalaVersion.value % "provided",
     "com.lihaoyi" %%% "utest" % "0.6.0" % "test",

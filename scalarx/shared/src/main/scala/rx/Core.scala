@@ -1,5 +1,6 @@
 package rx
 
+import io.monadless.Monadless
 import rx.opmacros.{Factories, Utils}
 
 import scala.annotation.compileTimeOnly
@@ -156,7 +157,7 @@ object Rx{
 
     private [this] var cached: Try[T] = null
 
-    object Internal extends Internal{
+    object Internal extends Internal {
 
       def owner = self.owner
 
@@ -223,6 +224,47 @@ object Rx{
     }
 
     override def toString() = s"Rx@${Integer.toHexString(hashCode()).take(2)}($now)"
+  }
+
+
+//  implicit def RxMonad(implicit ownerCtx: Ctx.Owner, dataCtx:Ctx.Data):Monad[Rx] = new Monad[Rx] {
+//    override def pure[A](x: A) = Rx.build((owner,data) => x)
+//
+//    override def flatMap[A, B](fa: Rx[A])(f: A => Rx[B]):Rx[B] = Rx.build((owner,data) => f(fa())())
+//
+////    @tailrec
+//    override def tailRecM[A, B](a: A)(f: A => Rx[Either[A, B]]) = ???
+////      f(a).flatMap {
+////      case Rx(Left(nextA)) => tailRecM(nextA)(f)
+////      case Rx(Right(b)) => pure(b)
+////    }
+//    //    override def tailRecM[A, B](a: A)(f: A => Moo[Either[A, B]]):Moo[B] = f(a) match {
+//    //      case Moo(Left(nextA))   => tailRecM(nextA)(f)
+//    //      case Moo(Right(b)) => Moo(b)
+//    //    }
+//
+//  }
+
+//  implicit def RxMonadless(implicit ownerCtx: Ctx.Owner, dataCtx:Ctx.Data) = io.monadless.cats.MonadlessMonad[Rx]()
+
+  object MonadlessRx extends Monadless[Rx] {
+    def flatMap[A, B](m: Rx[A])(f: A => Rx[B])(implicit ownerCtx: Ctx.Owner):Rx[B] = {
+      Rx.build { (o: Ctx.Owner, d: Ctx.Data) =>
+        f(m()(d))()(d)
+      }
+    }
+
+    def map[A, B](m: Rx[A])(f: A => B)(implicit ownerCtx: Ctx.Owner): Rx[B] = {
+      Rx.build { (o: Ctx.Owner, d: Ctx.Data) =>
+        f(m()(d))
+      }
+    }
+
+    def collect[A](l: List[Rx[A]])(implicit ownerCtx: Ctx.Owner): Rx[List[A]] = {
+      Rx.build { (o: Ctx.Owner, d: Ctx.Data) =>
+        l.map(_()(d))
+      }
+    }
   }
 }
 

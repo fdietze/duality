@@ -3,6 +3,8 @@ import util.{Failure, Success}
 
 import utest._
 import acyclic.file
+import Rx.MonadlessRx._
+
 object BasicTests extends TestSuite{
 
   //We dont care about potential Rx leaks in BasicTest
@@ -21,10 +23,15 @@ object BasicTests extends TestSuite{
         "ordering" - {
           var changes = ""
           val a = Var(1)
-          val b = Rx{ changes += "b"; a() + 1 }
-          val c = Rx{ changes += "c"; a() + b() }
+          val b = lift { val x = unlift(a) + 1; {changes += "b"; x} }
+          // val b = Rx.MonadlessRx.map(a){a => changes += "b"; a + 1}
+          // val b = lift {changes += "b"; unlift(a) + 1}
+          val c = lift{ val x = unlift(a) + unlift(b); {changes += "c"; x} }
           assert(changes == "bc")
+          assert(b.now == 2)
           a() = 4
+          assert(b.now == 5)
+          assert(c.now == 9)
           assert(changes == "bcbc")
         }
         "options"-{
