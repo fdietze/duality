@@ -1,10 +1,10 @@
 crossScalaVersions := Seq("2.10.7", "2.11.12", "2.12.4")
 
 lazy val scalarx = crossProject.settings(
-  organization := "com.lihaoyi",
-  name := "scalarx",
+  organization := "com.github.fdietze",
+  name := "duality",
   scalaVersion := "2.12.4",
-  version := "0.3.2",
+  version := "0.0.1",
 
   libraryDependencies ++= Seq(
     "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided",
