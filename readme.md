@@ -1,6 +1,8 @@
 Duality
 =======
 
+[![Build Status](https://travis-ci.org/fdietze/duality.svg?branch=master)](https://travis-ci.org/fdietze/duality)
+
 This is a fork of [scala.rx](https://github.com/lihaoyi/scala.rx) with the goal of building a small state management library. It is not useful for event propagation, but intended to be a complement. For event propagation use something like [Monix](https://monix.io) instead.
 
 Changes to scala.rx:
