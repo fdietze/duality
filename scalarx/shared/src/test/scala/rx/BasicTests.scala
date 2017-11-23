@@ -41,6 +41,19 @@ object BasicTests extends TestSuite{
           b() = Some(2)
           assert (c.now == Some(3))
         }
+        "avoid unnecessary updates" - {
+          var count = 0
+          val a = Var(0)
+          val b = Rx {
+            count += 1
+            a() + a()
+          }
+
+          assert(count == 1)
+          a() = 1
+          assert(b.now == 2)
+          assert(count == 2)
+        }
       }
       "languageFeatures" - {
         "patternMatching" - {
