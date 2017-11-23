@@ -31,6 +31,8 @@ package object rx {
 
   implicit class GenericVarOps[T](val node: Var[T]) extends AnyVal {
     def imap[V](read: Id[T] => Id[V])(write: Id[V] => Id[T])(implicit ownerCtx: Ctx.Owner): Var[V] = new IsomorphicVar[T,V](node,read,write)
+
+    def zoom[V](read: Id[T] => Id[V])(write: (Id[T],Id[V]) => Id[T])(implicit ownerCtx: Ctx.Owner): Var[V] = new ZoomedVar[T,V](node,read,write)
   }
 
   object SafeRxOps{

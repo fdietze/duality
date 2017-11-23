@@ -39,7 +39,7 @@ trait Rx[+T] {
     * [[Ctx.Data]] is available), and the contextual/implicit [[Rx]] is the
     * one that will update when the value of this [[Rx]] changes.
     */
-  def apply()(implicit ctx: Ctx.Data) = {
+  def apply()(implicit ctx: Ctx.Data): T = {
     addDownstream(ctx)
     now
   }
@@ -145,11 +145,10 @@ object Rx {
     * automatically when the [[owner]] recalculates, in order to avoid
     * memory leaks from un-used [[Rx]]s hanging around.
     */
-  class Dynamic[+T](func: (Ctx.Owner, Ctx.Data) => T, owner: Option[Ctx.Owner]) extends Rx[T] {
-    self =>
+  class Dynamic[T](func: (Ctx.Owner, Ctx.Data) => T, owner: Option[Ctx.Owner]) extends Rx[T] { self =>
+    //TODO: Be Covariant over T, (currently IsomorphicVar writes into cache, therefore Invariant)
 
-
-    private[this] var cached: Try[T] = null
+    private[rx] var cached: Try[T] = _
 
     private[rx] var depth = 0
     private[rx] var dead = false
