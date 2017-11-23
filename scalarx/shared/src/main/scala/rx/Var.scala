@@ -100,6 +100,7 @@ class IsomorphicVar[T, S](base: Var[T], read: T => S, write: S => T)(implicit ow
 
   // Proxy Var
   override def update(newValue: S): Unit = {
+    //TODO: ignore if already equal, like in BaseVar.update
     rx.cached = Success(newValue)
     base.value = write(newValue)
     // avoid triggering rx, because we already
