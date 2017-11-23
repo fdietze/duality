@@ -3,15 +3,21 @@ Duality
 
 This is a fork of [scala.rx](https://github.com/lihaoyi/scala.rx) with the goal of building a small state management library. It is not useful for event propagation, but intended to be a complement. For event propagation use something like [Monix](https://monix.io) instead.
 
-Changes
+Changes to scala.rx:
 * only left operators `map` and `Rx { ... }`
 * removed async
 * introduced `imap` and `zoom` on `Var`
 
 Try it:
 ```scala
+resolvers += "jitpack" at "https://jitpack.io"
 libraryDependencies += "com.github.fdietze" % "duality" % "83528be"
 ```
+
+(Be aware to use only one `%`, because of this jitpack issue: https://github.com/jitpack/jitpack.io/issues/372)
+
+
+The rest of the readme is currently the same.
 
 ----
 
