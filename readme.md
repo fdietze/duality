@@ -8,6 +8,11 @@ Changes
 * removed async
 * introduced `imap` and `zoom` on `Var`
 
+Try it:
+```scala
+libraryDependencies += "com.github.fdietze" % "duality" % "83528be"
+```
+
 ----
 
 
