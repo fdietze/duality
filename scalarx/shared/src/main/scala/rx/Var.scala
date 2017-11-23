@@ -5,6 +5,10 @@ import scala.util.{Success, Try}
 trait Var[T] extends Rx[T] {
   def update(newValue: T): Unit
 
+  def update(f: T => T):Unit = {
+    update(f(now))
+  }
+
   private[rx] var value: T
 
   private[rx] def depth: Int = 0
@@ -24,129 +28,148 @@ object Var {
   /**
     * Create a [[Var]] from an initial value
     */
-  def apply[T](initialValue: T): Var[T] = new BaseVar(initialValue)
+  def apply[T](initialValue: T): Var[T] = new Base(initialValue)
 
   /**
     * Set the value of multiple [[Var]]s at the same time; in doing so,
     * reduces the redundant updates that would normally occur setting
     * them one by one
     */
-  def set(args: VarAssignment[_]*) = {
+  def set(args: Assignment[_]*) = {
     args.foreach(_.set())
     Rx.doRecalc(
       args.flatMap(_.v.downStream),
       args.flatMap(_.v.observers)
     )
   }
-}
 
-case class VarAssignment[T](v: Var[T], value: T) {
-  def set(): Unit = {
-    v.value = value
-  }
-}
-
-/**
-  * Encapsulates the act of setting of a [[Var]] to a value, without
-  * actually setting it.
-  */
-object VarAssignment {
-  implicit def tuple2VarTuple[T](t: (Var[T], T)): VarAssignment[T] = {
-    VarAssignment(t._1, t._2)
-  }
-
-  implicit def tuples2VarTuple[T](ts: Seq[(Var[T], T)]): Seq[VarAssignment[T]] = {
-    ts.map(t => VarAssignment(t._1, t._2))
-  }
-}
-
-/**
-  * A smart variable that can be set manually, and will notify downstream
-  * [[Rx]]s and run any triggers whenever its value changes.
-  */
-class BaseVar[T](initialValue: T) extends Var[T] {
-
-  private[rx] var value = initialValue
-
-  override def now = value
-
-  /**
-    * Sets the value of this [[Var]] and runs any triggers/notifies
-    * any downstream [[Rx]]s to update
-    */
-  def update(newValue: T): Unit = {
-    if (value != newValue) {
-      value = newValue
-      Rx.doRecalc(downStream, observers)
+  case class Assignment[T](v: Var[T], value: T) {
+    def set(): Unit = {
+      v.value = value
     }
   }
-}
 
-class IsomorphicVar[T, S](base: Var[T], read: T => S, write: S => T)(implicit ownerCtx: Ctx.Owner) extends Var[S] {
-  self =>
+  /**
+    * Encapsulates the act of setting of a [[Var]] to a value, without
+    * actually setting it.
+    */
+  object Assignment {
+    implicit def tuple2VarTuple[T](t: (Var[T], T)): Assignment[T] = {
+      Assignment(t._1, t._2)
+    }
 
-  //  private[rx] val rx = base.map(read)
-  private[rx] val rx = Rx.build { (ownerCtx, dataCtx) =>
-    base.addDownstream(dataCtx)
-    read(base.now)
-  }(ownerCtx)
-
-
-  // Proxy Rx
-  override def now: S = rx.now
-
-  override private[rx] val downStream = rx.downStream
-  override private[rx] val observers = rx.observers
-
-  // Proxy Var
-  override def update(newValue: S): Unit = {
-    //TODO: ignore if already equal, like in BaseVar.update
-    rx.cached = Success(newValue)
-    base.value = write(newValue)
-    // avoid triggering rx, because we already
-    // know the current value: newValue
-    Rx.doRecalc(
-      rx.downStream ++ (base.downStream - rx),
-      rx.observers ++ base.observers
-    )
+    implicit def tuples2VarTuple[T](ts: Seq[(Var[T], T)]): Seq[Assignment[T]] = {
+      ts.map(t => Assignment(t._1, t._2))
+    }
   }
 
-  override private[rx] def value = rx.now
+  /**
+    * A smart variable that can be set manually, and will notify downstream
+    * [[Rx]]s and run any triggers whenever its value changes.
+    */
+  class Base[T](initialValue: T) extends Var[T] {
 
-  override private[rx] def value_=(newValue: S): Unit = {
-    base.value = write(newValue)
-  }
-}
+    private[rx] var value = initialValue
 
+    override def now = value
 
-class ZoomedVar[T, S](base: Var[T], read: T => S, write: (T, S) => T)(implicit ownerCtx: Ctx.Owner) extends Var[S] {
-
-  //  private[rx] val rx = base.map(read)
-  private[rx] val rx = Rx.build { (ownerCtx, dataCtx) =>
-    base.addDownstream(dataCtx)
-    read(base.now)
-  }(ownerCtx)
-
-  // Proxy Rx
-  override def now: S = rx.now
-
-  override private[rx] val downStream = rx.downStream
-  override private[rx] val observers = rx.observers
-
-  // Porxy Var
-  override def update(newValue: S): Unit = {
-    rx.cached = Success(newValue)
-    base.value = write(base.value, newValue)
-    // avoid triggering rx, because we already
-    // know the current value: newValue
-    Rx.doRecalc(
-      rx.downStream ++ (base.downStream - rx),
-      rx.observers ++ base.observers
-    )
+    /**
+      * Sets the value of this [[Var]] and runs any triggers/notifies
+      * any downstream [[Rx]]s to update
+      */
+    def update(newValue: T): Unit = {
+      if (value != newValue) {
+        value = newValue
+        Rx.doRecalc(downStream, observers)
+      }
+    }
   }
 
-  override private[rx] def value = rx.now
+  class Composed[T](base:Var[T], rx:Rx[T]) extends Var[T] {
 
-  override private[rx] def value_=(newValue: S): Unit = base.value = write(base.value, newValue)
+    // Proxy Rx
+    override def now: T = rx.now
+
+    override private[rx] val downStream = rx.downStream
+    override private[rx] val observers = rx.observers
+
+
+    // Proxy Var
+    private[rx] var value = now
+
+    def update(newValue: T): Unit = {
+      // We do a regular update of the base-var, since we do not know if
+      // rx.now will be newValue
+      base.update(newValue)
+    }
+  }
+
+  class Isomorphic[T, S](base: Var[T], read: T => S, write: S => T)(implicit ownerCtx: Ctx.Owner) extends Var[S] {
+    self =>
+
+    //  private[rx] val rx = base.map(read)
+    private[rx] val rx = Rx.build { (ownerCtx, dataCtx) =>
+      base.addDownstream(dataCtx)
+      read(base.now)
+    }(ownerCtx)
+
+
+    // Proxy Rx
+    override def now: S = rx.now
+
+    override private[rx] val downStream = rx.downStream
+    override private[rx] val observers = rx.observers
+
+    // Proxy Var
+    override def update(newValue: S): Unit = {
+      //TODO: ignore if already equal, like in BaseVar.update
+      value = newValue
+      // avoid triggering rx, because we already
+      // know the current value: newValue
+      Rx.doRecalc(
+        rx.downStream ++ (base.downStream - rx),
+        rx.observers ++ base.observers
+      )
+    }
+
+    override private[rx] def value = rx.now
+
+    override private[rx] def value_=(newValue: S): Unit = {
+      rx.cached = Success(newValue)
+      base.value = write(newValue)
+    }
+  }
+
+
+  class Zoomed[T, S](base: Var[T], read: T => S, write: (T, S) => T)(implicit ownerCtx: Ctx.Owner) extends Var[S] {
+
+    //  private[rx] val rx = base.map(read)
+    private[rx] val rx = Rx.build { (ownerCtx, dataCtx) =>
+      base.addDownstream(dataCtx)
+      read(base.now)
+    }(ownerCtx)
+
+    // Proxy Rx
+    override def now: S = rx.now
+
+    override private[rx] val downStream = rx.downStream
+    override private[rx] val observers = rx.observers
+
+    // Porxy Var
+    override def update(newValue: S): Unit = {
+      rx.cached = Success(newValue)
+      base.value = write(base.value, newValue)
+      // avoid triggering rx, because we already
+      // know the current value: newValue
+      Rx.doRecalc(
+        rx.downStream ++ (base.downStream - rx),
+        rx.observers ++ base.observers
+      )
+    }
+
+    override private[rx] def value = rx.now
+
+    override private[rx] def value_=(newValue: S): Unit = base.value = write(base.value, newValue)
+  }
+
 }
-

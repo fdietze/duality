@@ -148,6 +148,43 @@ object TransformedVarTests extends TestSuite {
       assert(writeCount == 1)
     }
 
+
+    "Composed Var" - {
+      import Ctx.Owner.Unsafe._
+
+      val list = Var(List(1,2,3))
+      val selectedItem = {
+        val rawSelected = Var[Option[Int]](Some(1))
+        new Var.Composed(rawSelected,Rx {
+          rawSelected().filter(list() contains _)
+        })
+      }
+
+      assert(selectedItem.now == Some(1))
+
+      selectedItem() = Some(4)
+      assert(selectedItem.now == None)
+
+      list.update(4 :: _)
+      assert(selectedItem.now == Some(4))
+    }
+
+    //TODO:
+//    "mapRead" - {
+//      val list = Var(List(1,2,3))
+//      val selectedItem = Var[Option[Int]](Some(1)).mapRead { selected =>
+//        selected().filter(list contains _)
+//      }
+//
+//      assert(selectedItem.now == Some(1))
+//
+//      selectedItem() = Some(4)
+//      assert(selectedItem.now == None)
+//
+//      list.update(4 :: _)
+//      assert(selectedItem.now == Some(4))
+//    }
+
     //TODO:
     // "multiset transformed Var" - {
     //   import Ctx.Owner.Unsafe._
