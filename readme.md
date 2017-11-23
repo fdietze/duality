@@ -1,3 +1,18 @@
+Duality
+=======
+
+This is a fork of [scala.rx](https://github.com/lihaoyi/scala.rx) with the goal of building a small state management library. It is not useful for event propagation, but intended to be a complement. For event propagation use something like [Monix](https://monix.io) instead.
+
+Changes
+* only left operators `map` and `Rx { ... }`
+* removed async
+* introduced `imap` and `zoom` on `Var`
+
+----
+
+
+
+
 Scala.Rx 0.3.2 [![Build Status](https://travis-ci.org/lihaoyi/scala.rx.svg?branch=master)](https://travis-ci.org/lihaoyi/scala.rx) [![Join the chat at https://gitter.im/lihaoyi/scala.rx](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/lihaoyi/scala.rx?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 ==============
 
