@@ -1,4 +1,5 @@
 import monocle.Lens
+import monocle.macros.GenLens
 import rx.opmacros.Operators
 import rx.opmacros.Utils.Id
 
@@ -36,6 +37,13 @@ package object rx {
 
     def zoom[V](read: Id[T] => Id[V])(write: (Id[T],Id[V]) => Id[T])(implicit ownerCtx: Ctx.Owner): Var[V] = new Var.Zoomed[T,V](base,read,write)
     def zoom[V](lens: Lens[T,V])(implicit ownerCtx: Ctx.Owner): Var[V] = new Var.Zoomed[T,V](base,lens.get,(base,zoomed) => lens.set(zoomed)(base))
+//    def zoomLens[V](read: Id[T] => Id[V])(implicit ownerCtx: Ctx.Owner): Var[V] = {
+//      val lens:Lens[T,V] = GenLens[T](read)
+//      new Var.Zoomed[T,V](base,lens.get,(base,zoomed) => lens.set(zoomed)(base))
+//    }
+
+    import monocle.macros.MonocleDuality
+    def zoomLens[V](field: T => V): Lens[T, V] = macro MonocleDuality.genLens(field)
 
     def mapRead(read: Var[T] => Ctx.Owner => Ctx.Data => T)(implicit ownerCtx: Ctx.Owner): Var[T] = new Var.Composed[T](base, Rx.build { (owner,data) => read(base)(owner)(data) })
   }

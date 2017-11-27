@@ -113,6 +113,27 @@ object TransformedVarTests extends TestSuite {
       assert(zipcode.now == 6)
     }
 
+    "zoomed Var with Monocle Lens shortcut" - {
+      import Ctx.Owner.Unsafe._
+
+      case class Company(name: String, zipcode: Int)
+      case class Employee(name: String, company: Company)
+
+      val employee = Var(Employee("jules", Company("wules", 7)))
+      val zipcode = employee.zoomLens(_.company.zipcode)
+
+      assert(employee.now == Employee("jules", Company("wules", 7)))
+      assert(zipcode.now == 7)
+
+      zipcode() = 8
+      assert(employee.now == Employee("jules", Company("wules", 8)))
+      assert(zipcode.now == 8)
+
+      employee() = Employee("gula", Company("bori", 6))
+      assert(employee.now == Employee("gula", Company("bori", 6)))
+      assert(zipcode.now == 6)
+    }
+
     "isomorphic Var function calls" - {
       import Ctx.Owner.Unsafe._
 
