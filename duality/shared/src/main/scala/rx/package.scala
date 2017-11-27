@@ -37,7 +37,7 @@ package object rx {
     def zoom[V](read: Id[T] => Id[V])(write: (Id[T],Id[V]) => Id[T])(implicit ownerCtx: Ctx.Owner): Var[V] = new Var.Zoomed[T,V](base,read,write)
     def zoom[V](lens: Lens[T,V])(implicit ownerCtx: Ctx.Owner): Var[V] = new Var.Zoomed[T,V](base,lens.get,(base,zoomed) => lens.set(zoomed)(base))
 
-// TODO:    def mapRead(read: => T)(implicit ownerCtx: Ctx.Owner): Var[T] = new Var.Composed[T](base,Rx { read })
+    def mapRead(read: Var[T] => Ctx.Owner => Ctx.Data => T)(implicit ownerCtx: Ctx.Owner): Var[T] = new Var.Composed[T](base, Rx.build { (owner,data) => read(base)(owner)(data) })
   }
 
   object SafeRxOps{
