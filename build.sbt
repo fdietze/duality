@@ -1,6 +1,6 @@
 crossScalaVersions := Seq("2.10.7", "2.11.12", "2.12.4")
 
-val monocleVersion = "1.5.0-cats-M1" // 1.5.0-cats-M1 based on cats 1.0.0-MF
+val monocleVersion = "1.5.0-cats-M2" // 1.5.0-cats-M1 based on cats 1.0.0-MF
 
 lazy val duality = crossProject.settings(
   organization := "com.github.fdietze",
