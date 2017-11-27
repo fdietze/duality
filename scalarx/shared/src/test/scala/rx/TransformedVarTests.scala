@@ -3,7 +3,7 @@ package rx
 package rx
 
 import acyclic.file
-
+import monocle.macros.GenLens
 import utest._
 
 object TransformedVarTests extends TestSuite {
@@ -92,6 +92,27 @@ object TransformedVarTests extends TestSuite {
       assert(c.now == "Schweinq")
     }
 
+    "zoomed Var with Monocle Lens" - {
+      import Ctx.Owner.Unsafe._
+
+      case class Company(name: String, zipcode: Int)
+      case class Employee(name: String, company: Company)
+
+      val employee = Var(Employee("jules", Company("wules", 7)))
+      val zipcode = employee.zoom(GenLens[Employee](_.company.zipcode))
+
+      assert(employee.now == Employee("jules", Company("wules", 7)))
+      assert(zipcode.now == 7)
+
+      zipcode() = 8
+      assert(employee.now == Employee("jules", Company("wules", 8)))
+      assert(zipcode.now == 8)
+
+      employee() = Employee("gula", Company("bori", 6))
+      assert(employee.now == Employee("gula", Company("bori", 6)))
+      assert(zipcode.now == 6)
+    }
+
     "isomorphic Var function calls" - {
       import Ctx.Owner.Unsafe._
 
@@ -152,10 +173,10 @@ object TransformedVarTests extends TestSuite {
     "Composed Var" - {
       import Ctx.Owner.Unsafe._
 
-      val list = Var(List(1,2,3))
+      val list = Var(List(1, 2, 3))
       val selectedItem = {
         val rawSelected = Var[Option[Int]](Some(1))
-        new Var.Composed(rawSelected,Rx {
+        new Var.Composed(rawSelected, Rx {
           rawSelected().filter(list() contains _)
         })
       }
@@ -170,20 +191,20 @@ object TransformedVarTests extends TestSuite {
     }
 
     //TODO:
-//    "mapRead" - {
-//      val list = Var(List(1,2,3))
-//      val selectedItem = Var[Option[Int]](Some(1)).mapRead { selected =>
-//        selected().filter(list contains _)
-//      }
-//
-//      assert(selectedItem.now == Some(1))
-//
-//      selectedItem() = Some(4)
-//      assert(selectedItem.now == None)
-//
-//      list.update(4 :: _)
-//      assert(selectedItem.now == Some(4))
-//    }
+    //    "mapRead" - {
+    //      val list = Var(List(1,2,3))
+    //      val selectedItem = Var[Option[Int]](Some(1)).mapRead { selected =>
+    //        selected().filter(list contains _)
+    //      }
+    //
+    //      assert(selectedItem.now == Some(1))
+    //
+    //      selectedItem() = Some(4)
+    //      assert(selectedItem.now == None)
+    //
+    //      list.update(4 :: _)
+    //      assert(selectedItem.now == Some(4))
+    //    }
 
     //TODO:
     // "multiset transformed Var" - {

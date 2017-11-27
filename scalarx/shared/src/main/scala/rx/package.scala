@@ -1,5 +1,7 @@
+import monocle.Lens
 import rx.opmacros.Operators
 import rx.opmacros.Utils.Id
+
 import scala.util.Try
 
 /**
@@ -33,6 +35,7 @@ package object rx {
     def imap[V](read: Id[T] => Id[V])(write: Id[V] => Id[T])(implicit ownerCtx: Ctx.Owner): Var[V] = new Var.Isomorphic[T,V](base,read,write)
 
     def zoom[V](read: Id[T] => Id[V])(write: (Id[T],Id[V]) => Id[T])(implicit ownerCtx: Ctx.Owner): Var[V] = new Var.Zoomed[T,V](base,read,write)
+    def zoom[V](lens: Lens[T,V])(implicit ownerCtx: Ctx.Owner): Var[V] = new Var.Zoomed[T,V](base,lens.get,(base,zoomed) => lens.set(zoomed)(base))
 
 // TODO:    def mapRead(read: => T)(implicit ownerCtx: Ctx.Owner): Var[T] = new Var.Composed[T](base,Rx { read })
   }
