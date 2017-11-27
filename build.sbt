@@ -2,7 +2,7 @@ crossScalaVersions := Seq("2.10.7", "2.11.12", "2.12.4")
 
 val monocleVersion = "1.5.0-cats-M1" // 1.5.0-cats-M1 based on cats 1.0.0-MF
 
-lazy val scalarx = crossProject.settings(
+lazy val duality = crossProject.settings(
   organization := "com.github.fdietze",
   name := "duality",
   scalaVersion := "2.12.4",
@@ -76,10 +76,10 @@ lazy val scalarx = crossProject.settings(
   scalaJSStage in Test := FullOptStage,
   scalacOptions ++= (if (isSnapshot.value) Seq.empty else Seq({
     val a = baseDirectory.value.toURI.toString.replaceFirst("[^/]+/?$", "")
-    val g = "https://raw.githubusercontent.com/lihaoyi/scala.rx"
+    val g = "https://raw.githubusercontent.com/fdietze/duality"
     s"-P:scalajs:mapSourceURI:$a->$g/v${version.value}/"
   }))
 )
 
-lazy val js = scalarx.js
-lazy val jvm = scalarx.jvm
+lazy val js = duality.js
+lazy val jvm = duality.jvm
